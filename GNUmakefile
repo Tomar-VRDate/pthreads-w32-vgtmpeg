@@ -34,9 +34,9 @@ DLL_VERD= $(DLL_VER)d
 
 DEVROOT = $(PREFIX)
 
-DLLDEST	= $(DEVROOT)\lib
-LIBDEST	= $(DEVROOT)\lib
-HDRDEST	= $(DEVROOT)\include
+DLLDEST	= $(DEVROOT)/lib
+LIBDEST	= $(DEVROOT)/lib
+HDRDEST	= $(DEVROOT)/include
 
 
 # If Running MsysDTK
@@ -468,10 +468,13 @@ all:
 	@ $(MAKE) clean GC
 
 install_static:
+	mkdir -p $(LIBDEST);
+	mkdir -p $(HDRDEST);
 	cp *.a $(LIBDEST)
 	cp pthread.h $(HDRDEST)
 	cp sched.h $(HDRDEST)
 	cp semaphore.h $(HDRDEST)
+
 GC:
 		$(MAKE) CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_OBJS)" $(GC_DLL)
 
