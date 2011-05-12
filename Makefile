@@ -11,12 +11,11 @@
 DLL_VER	= 2
 DLL_VERD= $(DLL_VER)d
 
-DEVROOT	= C:\pthreads
 DEVROOT = $(PREFIX)
 
 DLLDEST	= $(DEVROOT)\DLL
-LIBDEST	= $(DEVROOT)\LIB
-HDRDEST	= $(DEVROOT)\INCLUDE
+LIBDEST	= $(DEVROOT)\lib
+HDRDEST	= $(DEVROOT)\include
 
 DLLS	= pthreadVCE$(DLL_VER).dll pthreadVSE$(DLL_VER).dll pthreadVC$(DLL_VER).dll \
 		  pthreadVCE$(DLL_VERD).dll pthreadVSE$(DLL_VERD).dll pthreadVC$(DLL_VERD).dll
@@ -456,6 +455,12 @@ clean:
 	if exist *.i del *.i
 	if exist *.res del *.res
 
+
+install_static:
+	cp pthread*.a $(LIBDEST)
+	cp pthread.h $(HDRDEST)
+	cp sched.h $(HDRDEST)
+	cp semaphore.h $(HDRDEST)
 
 install: $(DLLS)
 	copy pthread*.dll $(DLLDEST)

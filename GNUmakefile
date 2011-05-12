@@ -32,10 +32,12 @@
 DLL_VER	= 2
 DLL_VERD= $(DLL_VER)d
 
-DEVROOT	= C:\PTHREADS
+DEVROOT = $(PREFIX)
 
-DLLDEST	= $(DEVROOT)\DLL
-LIBDEST	= $(DEVROOT)\DLL
+DLLDEST	= $(DEVROOT)\lib
+LIBDEST	= $(DEVROOT)\lib
+HDRDEST	= $(DEVROOT)\include
+
 
 # If Running MsysDTK
 RM	= rm -f
@@ -465,6 +467,11 @@ all:
 	@ $(MAKE) clean GCE
 	@ $(MAKE) clean GC
 
+install_static:
+	cp pthread*.a $(LIBDEST)
+	cp pthread.h $(HDRDEST)
+	cp sched.h $(HDRDEST)
+	cp semaphore.h $(HDRDEST)
 GC:
 		$(MAKE) CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_OBJS)" $(GC_DLL)
 
