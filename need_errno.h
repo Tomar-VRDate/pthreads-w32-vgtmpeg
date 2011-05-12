@@ -20,8 +20,8 @@
 #ifndef _INC_ERRNO
 #define _INC_ERRNO
 
-#if     !defined(_WIN32) && !defined(_MAC)
-#error ERROR: Only Mac or Win32 targets supported!
+#if     !defined(_WIN32)
+#error ERROR: Only Win32 targets supported!
 #endif
 
 #include <winsock.h>
@@ -59,11 +59,20 @@ extern "C" {
 #endif
 #endif
 
+#if !defined(PTW32_STATIC_LIB)
+#  ifdef PTW32_BUILD
+#    define PTW32_DLLPORT __declspec (dllexport)
+#  else
+#    define PTW32_DLLPORT __declspec (dllimport)
+#  endif
+#else
+#  define PTW32_DLLPORT
+#endif
 
 /* declare reference to errno */
 
 #if     (defined(_MT) || defined(_MD) || defined(_DLL)) && !defined(_MAC)
-_CRTIMP extern int * __cdecl _errno(void);
+PTW32_DLLPORT int * __cdecl _errno(void);
 #define errno   (*_errno())
 #else   /* ndef _MT && ndef _MD && ndef _DLL */
 _CRTIMP extern int errno;
@@ -119,6 +128,10 @@ _CRTIMP extern int errno;
 #endif
 
 #define EILSEQ          42
+
+/* POSIX 2008 - robust mutexes */
+#define EOWNERDEAD	43
+#define ENOTRECOVERABLE	44
 
 /*
  * Support EDEADLOCK for compatibiity with older MS-C versions.

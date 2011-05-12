@@ -11,11 +11,11 @@
 DLL_VER	= 2
 DLL_VERD= $(DLL_VER)d
 
-DEVROOT = $(PREFIX)
+DEVROOT	= C:\pthreads
 
 DLLDEST	= $(DEVROOT)\DLL
-LIBDEST	= $(DEVROOT)\lib
-HDRDEST	= $(DEVROOT)\include
+LIBDEST	= $(DEVROOT)\LIB
+HDRDEST	= $(DEVROOT)\INCLUDE
 
 DLLS	= pthreadVCE$(DLL_VER).dll pthreadVSE$(DLL_VER).dll pthreadVC$(DLL_VER).dll \
 		  pthreadVCE$(DLL_VERD).dll pthreadVSE$(DLL_VERD).dll pthreadVC$(DLL_VERD).dll
@@ -27,16 +27,18 @@ STATIC_STAMPS	= pthreadVCE$(DLL_VER).static pthreadVSE$(DLL_VER).static pthreadV
 OPTIM	= /O2 /Ob2
 OPTIMD	=
 
-CFLAGS	= /W3 /MD /nologo /Yd /I. /D_WIN32_WINNT=0x400 /DHAVE_CONFIG_H
-CFLAGSD	= /Zi $(CFLAGS)
+CFLAGS	= /W3 /MD /nologo /I. /D_WIN32_WINNT=0x400 /DHAVE_PTW32_CONFIG_H
+CFLAGSD	= /Z7 $(CFLAGS)
 
+# Uncomment this if config.h defines RETAIN_WSALASTERROR
+#XLIBS = wsock32.lib
 
 # Default cleanup style
 CLEANUP	= __CLEANUP_C
 
 # C++ Exceptions
-VCEFLAGS	= /GX /TP $(CFLAGS)
-VCEFLAGSD	= /GX /TP $(CFLAGSD)
+VCEFLAGS	= /EHsc /TP $(CFLAGS)
+VCEFLAGSD	= /EHsc /TP $(CFLAGSD)
 #Structured Exceptions
 VSEFLAGS	= $(CFLAGS)
 VSEFLAGSD	= $(CFLAGSD)
@@ -57,6 +59,7 @@ DLL_OBJS	= \
 		condvar.obj \
 		create.obj \
 		dll.obj \
+		autostatic.obj \
 		errno.obj \
 		exit.obj \
 		fork.obj \
@@ -114,6 +117,7 @@ SMALL_STATIC_OBJS	= \
 		pthread_cond_wait.obj \
 		create.obj \
 		dll.obj \
+		autostatic.obj \
 		errno.obj \
 		pthread_exit.obj \
 		fork.obj \
@@ -126,13 +130,17 @@ SMALL_STATIC_OBJS	= \
 		pthread_mutexattr_setpshared.obj \
 		pthread_mutexattr_settype.obj \
 		pthread_mutexattr_gettype.obj \
+		pthread_mutexattr_setrobust.obj \
+		pthread_mutexattr_getrobust.obj \
 		pthread_mutex_lock.obj \
 		pthread_mutex_timedlock.obj \
 		pthread_mutex_unlock.obj \
 		pthread_mutex_trylock.obj \
+		pthread_mutex_consistent.obj \
 		pthread_mutexattr_setkind_np.obj \
 		pthread_mutexattr_getkind_np.obj \
 		pthread_getw32threadhandle_np.obj \
+		pthread_getunique_np.obj \
 		pthread_delay_np.obj \
 		pthread_num_processors_np.obj \
 		pthread_win32_attach_detach_np.obj \
@@ -276,15 +284,19 @@ MUTEX_SRCS	= \
 		pthread_mutexattr_setpshared.c \
 		pthread_mutexattr_settype.c \
 		pthread_mutexattr_gettype.c \
+		pthread_mutexattr_setrobust.c \
+		pthread_mutexattr_getrobust.c \
 		pthread_mutex_lock.c \
 		pthread_mutex_timedlock.c \
 		pthread_mutex_unlock.c \
-		pthread_mutex_trylock.c
+		pthread_mutex_trylock.c \
+		pthread_mutex_consistent.c
 
 NONPORTABLE_SRCS = \
 		pthread_mutexattr_setkind_np.c \
 		pthread_mutexattr_getkind_np.c \
 		pthread_getw32threadhandle_np.c \
+		pthread_getunique_np.c \
 		pthread_delay_np.c \
 		pthread_num_processors_np.c \
 		pthread_win32_attach_detach_np.c \
@@ -456,12 +468,6 @@ clean:
 	if exist *.res del *.res
 
 
-install_static:
-	cp pthread*.a $(LIBDEST)
-	cp pthread.h $(HDRDEST)
-	cp sched.h $(HDRDEST)
-	cp semaphore.h $(HDRDEST)
-
 install: $(DLLS)
 	copy pthread*.dll $(DLLDEST)
 	copy pthread*.lib $(LIBDEST)
@@ -472,12 +478,12 @@ install: $(DLLS)
 $(DLLS): $(DLL_OBJS)
 	cl /LDd /Zi /nologo $(DLL_OBJS) \
 		/link /nodefaultlib:libcmt /implib:$*.lib \
-		msvcrt.lib wsock32.lib /out:$@
+		msvcrt.lib $(XLIBS) /out:$@
 
 $(INLINED_STAMPS): $(DLL_INLINED_OBJS)
 	cl /LDd /Zi /nologo $(DLL_INLINED_OBJS) \
 		/link /nodefaultlib:libcmt /implib:$*.lib \
-		msvcrt.lib wsock32.lib /out:$*.dll
+		msvcrt.lib $(XLIBS) /out:$*.dll
 
 $(STATIC_STAMPS): $(DLL_INLINED_OBJS)
 	if exist $*.lib del $*.lib
