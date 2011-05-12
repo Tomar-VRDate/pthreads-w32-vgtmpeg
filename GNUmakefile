@@ -468,7 +468,7 @@ all:
 	@ $(MAKE) clean GC
 
 install_static:
-	cp pthread*.a $(LIBDEST)
+	cp *.a $(LIBDEST)
 	cp pthread.h $(HDRDEST)
 	cp sched.h $(HDRDEST)
 	cp semaphore.h $(HDRDEST)
