@@ -83,7 +83,7 @@ mythread(void * arg)
    * Cancel every thread. These threads are deferred cancelable only, so
    * only the thread performing the once routine (my_func) will see it (there are
    * no other cancelation points here). The result will be that every thread
-   * eventually cancels only when it becomes the new once thread.
+   * eventually cancels only when it becomes the new 'once' thread.
    */
   assert(pthread_cancel(pthread_self()) == 0);
   assert(pthread_once(&once[(int)(size_t)arg], myfunc) == 0);
@@ -108,7 +108,9 @@ main()
 
       for (i = 0; i < NUM_THREADS; i++)
         {
-          assert(pthread_create(&t[i][j], NULL, mythread, (void *)(size_t)j) == 0);
+          /* GCC build: create was failing with EAGAIN after 790 threads */
+          while (0 != pthread_create(&t[i][j], NULL, mythread, (void *)(size_t)j))
+            sched_yield();
         }
     }
 

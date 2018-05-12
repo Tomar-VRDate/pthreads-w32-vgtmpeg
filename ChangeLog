@@ -1,3 +1,129 @@
+2012-03-18  Ross Johnson <ross dot johnson at homemail dot com dot au>
+
+	* create.c (pthread_create): add __cdecl attribute to thread routine
+	arg
+	* implement.h (pthread_key_t): add __cdecl attribute to destructor
+	element
+	(ThreadParms): likewise for start element
+	* pthread.h (pthread_create): add __cdecl to prototype start arg
+	(pthread_once): likewise for init_routine arg
+	(pthread_key_create): likewise for destructor arg
+	(ptw32_cleanup_push): replace type of routine arg with previously
+	defined ptw32_cleanup_callback_t
+	* pthread_key_create.c: add __cdecl attribute to destructor arg
+	* pthread_once.c: add __cdecl attribute to init_routine arg
+	* ptw32_threadStart.c (start): add __cdecl to start variable type
+
+
+2011-07-06  Ross Johnson <ross dot johnson at homemail dot com dot au>
+
+	* pthread_cond_wait.c (pragma inline_depth): this is almost redundant
+	now nevertheless fixed thei controlling MSC_VER from "< 800" to
+	"< 1400" (i.e. any prior to VC++ 8.0).
+	* pthread_once.ci (pragma inline_depth): Likewise.
+	* pthread_rwlock_timedwrlock.ci (pragma inline_depth): Likewise.
+	* pthread_rwlock_wrlock.ci (pragma inline_depth): Likewise.
+	* sem_timedwait.ci (pragma inline_depth): Likewise.
+	* sem_wait.ci (pragma inline_depth): Likewise.
+
+2011-07-05  Ross Johnson <ross dot johnson at homemail dot com dot au>
+
+	* pthread_win32_attach_detach_np.c: Use strncat_s if available
+	to removei a compile warning; MingW supports this routine but we
+	continue to use strncat anyway there because it is secure if
+	given the correct parameters; fix strncat param 3 to avoid
+	buffer overrun exploitation potential.
+
+2011-07-03  Ross Johnson <ross dot johnson at homemail dot com dot au>
+
+	* pthread_spin_unlock.c (EPERM): Return success if unlocking a lock
+	that is not locked, because single CPU machines wrap a
+	PTHREAD_MUTEX_NORMAL mutex, which returns success in this case.
+	* pthread_win32_attach_detach_np.c (QUSEREX.DLL): Load from an
+	absolute path only which must be the Windows System folder.
+
+2011-07-03 Daniel Richard G. <skunk at iskunk dot org>
+
+	* Makefile (_WIN32_WINNT): Removed; duplicate definition in
+	implement.h; more cleanup and enhancements.
+
+2011-07-02 Daniel Richard G. <skunk at iskunk dot org>
+
+	* Makefile: Cleanups and implovements.
+	* ptw32_MCS_locks.c: Casting fixes.
+	* implement.h: Interlocked call and argument casting macro fixes
+	to support older and newer build environments.
+
+2011-07-01  Ross Johnson <ross dot johnson at homemail dot com dot au>
+
+	* *.[ch] (PTW32_INTERLOCKED_*): Redo 23 and 64 bit versions of these
+	macros and re-apply in code to undo the incorrect changes from
+	2011-06-29; remove some size_t casts which should not be required
+	and may be problematic.a
+	There are now two sets of macros:
+	PTW32_INTERLOCKED_*_LONG which work only on 32 bit integer variables;
+	PTW32_INTERLOCKED_*_SIZE which work on size_t integer variables, i.e.
+	LONG for 32 bit systems and LONGLONG for 64 bit systems.
+	* implement.h (MCS locks): nextFlag and waitFlag are now HANDLE type.
+	* ptw32_MCS_locks.c: Likewise.
+	* pthread.h (#include <setjmp.h>): Removed.
+	* ptw32_throw.c (#include <setjmp.h>): Added.
+	* ptw32_threadStart.c (#include <setjmp.h>): Added.
+	* implement.h (#include <setjmp.h>): Added.
+
+2011-06-30  Ross Johnson <ross dot johnson at homemail dot com dot au>
+
+	* pthread_once.c: Tighten 'if' statement casting; fix interlocked
+	pointer cast for 64 bit compatibility (missed yesterday); remove
+	the superfluous static cleanup routine and call the release routine
+	directly if popped.
+	* create.c (stackSize): Now type size_t.
+	* pthread.h (struct ptw32_thread_t_): Rearrange to fix element alignments.
+
+2011-06-29 Daniel Richard G. <skunk at iskunk dot org>
+
+	* ptw32_relmillisecs.c (ftime):
+	  _ftime64_s() is only available in MSVC 2005 or later;
+	  _ftime64() is available in MinGW or MSVC 2002 or later;
+	  _ftime() is always available.
+	* pthread.h (long long): Not defined in older MSVC 6.
+	* implement.h (long long): Likewise.
+	* pthread_getunique_np.c (long long): Likewise.
+
+2011-06-29  Ross Johnson <ross dot johnson at homemail dot com dot au>
+
+	* *.[ch] (PTW32_INTERLOCKED_*): These macros should now work for
+	both 32 and 64 bit builds. The MingW versions are all inlined asm
+	while the MSVC versions expand to their Interlocked* or Interlocked*64
+	counterparts appropriately. The argument type have also been changed
+	to cast to the appropriate value or pointer size for the architecture.
+
+2011-05-29  Ross Johnson <ross dot johnson at homemail dot com dot au>
+
+	* *.[ch] (#ifdef): Extended cleanup to whole project.
+
+2011-05-29 Daniel Richard G. <skunk at iskunk dot org>
+
+	* Makefile (CC): Define  CC to allow use of other compatible
+	compilers such as the Intel compilter icl.
+	* implement.h (#if): Fix forms like #if HAVE_SOMETHING.
+	* pthread.h: Likewise.
+	* sched.h: Likewise; PTW32_LEVEL_* becomes PTW32_SCHED_LEVEL_*.
+	* semaphore.h: Likewise.
+
+2011-05-11  Ross Johnson <ross.johnson at homemail.com.au>
+
+	* ptw32_callUserDestroyRoutines.c (terminate): Altered includes
+	to match ptw32_threadStart.c.
+	* GNUmakefile (GCE-inlined-debug, DOPT): Fixed.
+
+2011-04-31  Ross Johnson <ross.johnson at homemail.com.au>
+
+	* (robust mutexes): Added this API. The API is not
+	mandatory for implementations that don't support PROCESS_SHARED
+	mutexes, nevertheless it was considered useful both functionally
+	and for source-level compatibility.
+	
 2011-03-26  Ross Johnson <ross.johnson at homemail.com.au>
 
 	* pthread_getunique_np.c: New non-POSIX interface for compatibility

@@ -55,7 +55,7 @@ int ptw32_features = 0;
 /*
  * Global [process wide] thread sequence Number
  */
-unsigned long long ptw32_threadSeqNumber = 0;
+unsigned __int64 ptw32_threadSeqNumber = 0;
 
 /* 
  * Function pointer to QueueUserAPCEx if it exists, otherwise
@@ -99,7 +99,7 @@ ptw32_mcs_lock_t ptw32_spinlock_test_init_lock = 0;
  */
 ptw32_mcs_lock_t ptw32_cond_list_lock = 0;
 
-#ifdef _UWIN
+#if defined(_UWIN)
 /*
  * Keep a count of the number of threads.
  */

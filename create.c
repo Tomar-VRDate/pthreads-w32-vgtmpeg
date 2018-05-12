@@ -44,7 +44,7 @@
 int
 pthread_create (pthread_t * tid,
 		const pthread_attr_t * attr,
-		void *(*start) (void *), void *arg)
+		void *(PTW32_CDECL *start) (void *), void *arg)
      /*
       * ------------------------------------------------------
       * DOCPUBLIC
@@ -90,7 +90,7 @@ pthread_create (pthread_t * tid,
   int result = EAGAIN;
   int run = PTW32_TRUE;
   ThreadParms *parms = NULL;
-  long stackSize;
+  unsigned int stackSize;
   int priority;
   pthread_t self;
 
@@ -142,7 +142,7 @@ pthread_create (pthread_t * tid,
 
   if (a != NULL)
     {
-      stackSize = a->stacksize;
+      stackSize = (unsigned int)a->stacksize;
       tp->detachState = a->detachstate;
       priority = a->param.sched_priority;
 
@@ -205,7 +205,7 @@ pthread_create (pthread_t * tid,
   tp->threadH =
     threadH =
     (HANDLE) _beginthreadex ((void *) NULL,	/* No security info             */
-			     (unsigned) stackSize,	/* default stack size   */
+			     stackSize,		/* default stack size   */
 			     ptw32_threadStart,
 			     parms,
 			     (unsigned)
@@ -238,7 +238,7 @@ pthread_create (pthread_t * tid,
 
     tp->threadH =
       threadH =
-      (HANDLE) _beginthread (ptw32_threadStart, (unsigned) stackSize,	/* default stack size   */
+      (HANDLE) _beginthread (ptw32_threadStart, stackSize,	/* default stack size   */
 			     parms);
 
     /*
@@ -299,7 +299,7 @@ FAIL0:
       *tid = thread;
     }
 
-#ifdef _UWIN
+#if defined(_UWIN)
   if (result == 0)
     pthread_count++;
 #endif

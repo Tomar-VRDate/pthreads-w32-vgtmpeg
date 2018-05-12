@@ -100,12 +100,12 @@
  * set flag to -1 otherwise. Note that -1 cannot be a valid handle value.
  */
 INLINE void 
-ptw32_mcs_flag_set (LONG * flag)
+ptw32_mcs_flag_set (HANDLE * flag)
 {
-  HANDLE e = (HANDLE)(size_t)PTW32_INTERLOCKED_COMPARE_EXCHANGE(
-						(PTW32_INTERLOCKED_LPLONG)flag,
-						(PTW32_INTERLOCKED_LONG)(size_t)-1,
-						(PTW32_INTERLOCKED_LONG)(size_t)0);
+  HANDLE e = (HANDLE)(PTW32_INTERLOCKED_SIZE)PTW32_INTERLOCKED_COMPARE_EXCHANGE_SIZE(
+						(PTW32_INTERLOCKED_SIZEPTR)flag,
+						(PTW32_INTERLOCKED_SIZE)-1,
+						(PTW32_INTERLOCKED_SIZE)0);
   if ((HANDLE)0 != e)
     {
       /* another thread has already stored an event handle in the flag */
@@ -120,18 +120,20 @@ ptw32_mcs_flag_set (LONG * flag)
  * set, and proceed without creating an event otherwise.
  */
 INLINE void 
-ptw32_mcs_flag_wait (LONG * flag)
+ptw32_mcs_flag_wait (HANDLE * flag)
 {
-  if (0 == PTW32_INTERLOCKED_EXCHANGE_ADD((LPLONG)flag, 0)) /* MBR fence */
+  if ((PTW32_INTERLOCKED_LONG)0 ==
+        PTW32_INTERLOCKED_EXCHANGE_ADD_SIZE((PTW32_INTERLOCKED_SIZEPTR)flag,
+                                            (PTW32_INTERLOCKED_SIZE)0)) /* MBR fence */
     {
       /* the flag is not set. create event. */
 
       HANDLE e = CreateEvent(NULL, PTW32_FALSE, PTW32_FALSE, NULL);
 
-      if (0 == PTW32_INTERLOCKED_COMPARE_EXCHANGE(
-			                  (PTW32_INTERLOCKED_LPLONG)flag,
-			                  (PTW32_INTERLOCKED_LONG)(size_t)e,
-			                  (PTW32_INTERLOCKED_LONG)(size_t)0))
+      if ((PTW32_INTERLOCKED_SIZE)0 == PTW32_INTERLOCKED_COMPARE_EXCHANGE_SIZE(
+			                  (PTW32_INTERLOCKED_SIZEPTR)flag,
+			                  (PTW32_INTERLOCKED_SIZE)e,
+			                  (PTW32_INTERLOCKED_SIZE)0))
 	{
 	  /* stored handle in the flag. wait on it now. */
 	  WaitForSingleObject(e, INFINITE);
@@ -149,7 +151,7 @@ ptw32_mcs_flag_wait (LONG * flag)
  * Algorithms for Scalable Synchronization on Shared-Memory Multiprocessors.
  * ACM Transactions on Computer Systems, 9(1):21-65, Feb. 1991.
  */
-#ifdef PTW32_BUILD_INLINED
+#if defined(PTW32_BUILD_INLINED)
 INLINE 
 #endif /* PTW32_BUILD_INLINED */
 void 
@@ -163,8 +165,8 @@ ptw32_mcs_lock_acquire (ptw32_mcs_lock_t * lock, ptw32_mcs_local_node_t * node)
   node->next = 0; /* initially, no successor */
   
   /* queue for the lock */
-  pred = (ptw32_mcs_local_node_t *)PTW32_INTERLOCKED_EXCHANGE_PTR((PVOID volatile *)lock,
-								  (PVOID) node);
+  pred = (ptw32_mcs_local_node_t *)PTW32_INTERLOCKED_EXCHANGE_PTR((PTW32_INTERLOCKED_PVOID_PTR)lock,
+								  (PTW32_INTERLOCKED_PVOID)node);
 
   if (0 != pred)
     {
@@ -183,33 +185,34 @@ ptw32_mcs_lock_acquire (ptw32_mcs_lock_t * lock, ptw32_mcs_local_node_t * node)
  * Algorithms for Scalable Synchronization on Shared-Memory Multiprocessors.
  * ACM Transactions on Computer Systems, 9(1):21-65, Feb. 1991.
  */
-#ifdef PTW32_BUILD_INLINED
+#if defined(PTW32_BUILD_INLINED)
 INLINE 
 #endif /* PTW32_BUILD_INLINED */
 void 
 ptw32_mcs_lock_release (ptw32_mcs_local_node_t * node)
 {
   ptw32_mcs_lock_t *lock = node->lock;
-  ptw32_mcs_local_node_t *next = (ptw32_mcs_local_node_t *)(size_t)
-    PTW32_INTERLOCKED_EXCHANGE_ADD((LPLONG)&node->next, 0); /* MBR fence */
+  ptw32_mcs_local_node_t *next =
+    (ptw32_mcs_local_node_t *)
+      PTW32_INTERLOCKED_EXCHANGE_ADD_SIZE((PTW32_INTERLOCKED_SIZEPTR)&node->next, (PTW32_INTERLOCKED_SIZE)0); /* MBR fence */
 
   if (0 == next)
     {
       /* no known successor */
 
       if (node == (ptw32_mcs_local_node_t *)
-	  PTW32_INTERLOCKED_COMPARE_EXCHANGE_PTR((PVOID volatile *)lock,
-						 (PVOID)0,
-						 (PVOID)node))
+	  PTW32_INTERLOCKED_COMPARE_EXCHANGE_PTR((PTW32_INTERLOCKED_PVOID_PTR)lock,
+						 (PTW32_INTERLOCKED_PVOID)0,
+						 (PTW32_INTERLOCKED_PVOID)node))
 	{
 	  /* no successor, lock is free now */
 	  return;
 	}
   
-      /* wait for successor */
+      /* A successor has started enqueueing behind us so wait for them to link to us */
       ptw32_mcs_flag_wait(&node->nextFlag);
-      next = (ptw32_mcs_local_node_t *)(size_t)
-	PTW32_INTERLOCKED_EXCHANGE_ADD((PTW32_INTERLOCKED_LPLONG)&node->next, 0); /* MBR fence */
+      next = (ptw32_mcs_local_node_t *)
+	PTW32_INTERLOCKED_EXCHANGE_ADD_SIZE((PTW32_INTERLOCKED_SIZEPTR)&node->next, (PTW32_INTERLOCKED_SIZE)0); /* MBR fence */
     }
 
   /* pass the lock */
@@ -219,7 +222,7 @@ ptw32_mcs_lock_release (ptw32_mcs_local_node_t * node)
 /*
   * ptw32_mcs_lock_try_acquire
  */
-#ifdef PTW32_BUILD_INLINED
+#if defined(PTW32_BUILD_INLINED)
 INLINE 
 #endif /* PTW32_BUILD_INLINED */
 int 
@@ -230,10 +233,10 @@ ptw32_mcs_lock_try_acquire (ptw32_mcs_lock_t * lock, ptw32_mcs_local_node_t * no
   node->readyFlag = 0;
   node->next = 0; /* initially, no successor */
 
-  return ((PVOID)PTW32_INTERLOCKED_COMPARE_EXCHANGE_PTR((PVOID volatile *)lock,
-                                                        (PVOID)node,
-                                                        (PVOID)0)
-                                 == (PVOID)0) ? 0 : EBUSY;
+  return ((PTW32_INTERLOCKED_PVOID)PTW32_INTERLOCKED_COMPARE_EXCHANGE_PTR((PTW32_INTERLOCKED_PVOID_PTR)lock,
+                                                        (PTW32_INTERLOCKED_PVOID)node,
+                                                        (PTW32_INTERLOCKED_PVOID)0)
+                                 == (PTW32_INTERLOCKED_PVOID)0) ? 0 : EBUSY;
 }
 
 /*
@@ -247,7 +250,7 @@ ptw32_mcs_lock_try_acquire (ptw32_mcs_lock_t * lock, ptw32_mcs_local_node_t * no
  *
  * Should only be called by the thread that has the lock.
  */
-#ifdef PTW32_BUILD_INLINED
+#if defined(PTW32_BUILD_INLINED)
 INLINE 
 #endif /* PTW32_BUILD_INLINED */
 void 
@@ -258,9 +261,9 @@ ptw32_mcs_node_transfer (ptw32_mcs_local_node_t * new_node, ptw32_mcs_local_node
   new_node->readyFlag = 0; /* Not needed - we were waiting on this */
   new_node->next = 0;
 
-  if ((ptw32_mcs_local_node_t *)PTW32_INTERLOCKED_COMPARE_EXCHANGE_PTR((PVOID volatile *)new_node->lock,
-                                                                       (PVOID)new_node,
-                                                                       (PVOID)old_node)
+  if ((ptw32_mcs_local_node_t *)PTW32_INTERLOCKED_COMPARE_EXCHANGE_PTR((PTW32_INTERLOCKED_PVOID_PTR)new_node->lock,
+                                                                       (PTW32_INTERLOCKED_PVOID)new_node,
+                                                                       (PTW32_INTERLOCKED_PVOID)old_node)
        != old_node)
     {
       /*

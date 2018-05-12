@@ -36,12 +36,12 @@
 
 #include "pthread.h"
 #include "implement.h"
-#ifndef NEED_FTIME
+#if !defined(NEED_FTIME)
 #include <sys/timeb.h>
 #endif
 
 
-#ifdef PTW32_BUILD_INLINED
+#if defined(PTW32_BUILD_INLINED)
 INLINE 
 #endif /* PTW32_BUILD_INLINED */
 DWORD
@@ -52,12 +52,13 @@ ptw32_relmillisecs (const struct timespec * abstime)
   DWORD milliseconds;
   int64_t tmpAbsMilliseconds;
   int64_t tmpCurrMilliseconds;
-#ifdef NEED_FTIME
+#if defined(NEED_FTIME)
   struct timespec currSysTime;
   FILETIME ft;
   SYSTEMTIME st;
 #else /* ! NEED_FTIME */
-#if (defined(__MINGW64__) || defined(__MINGW32__)) && __MSVCRT_VERSION__ >= 0x0601
+#if ( defined(_MSC_VER) && _MSC_VER >= 1300 ) || \
+    ( (defined(__MINGW64__) || defined(__MINGW32__)) && __MSVCRT_VERSION__ >= 0x0601 )
   struct __timeb64 currSysTime;
 #else
   struct _timeb currSysTime;
@@ -81,7 +82,7 @@ ptw32_relmillisecs (const struct timespec * abstime)
 
   /* get current system time */
 
-#ifdef NEED_FTIME
+#if defined(NEED_FTIME)
 
   GetSystemTime(&st);
   SystemTimeToFileTime(&st, &ft);
@@ -98,9 +99,10 @@ ptw32_relmillisecs (const struct timespec * abstime)
 
 #else /* ! NEED_FTIME */
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER >= 1400
   _ftime64_s(&currSysTime);
-#elif (defined(__MINGW64__) || defined(__MINGW32__)) && __MSVCRT_VERSION__ >= 0x0601
+#elif ( defined(_MSC_VER) && _MSC_VER >= 1300 ) || \
+      ( (defined(__MINGW64__) || defined(__MINGW32__)) && __MSVCRT_VERSION__ >= 0x0601 )
   _ftime64(&currSysTime);
 #else
   _ftime(&currSysTime);

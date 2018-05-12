@@ -66,7 +66,7 @@
  * ■ If the thread that acquires the lock with EOWNERDEAD terminates without unlocking the
  * mutex, the next owner acquires the lock with an EOWNERDEAD return code.
  */
-#ifndef _UWIN
+#if !defined(_UWIN)
 /*#   include <process.h> */
 #endif
 #include "pthread.h"
@@ -80,10 +80,10 @@ ptw32_robust_mutex_inherit(pthread_mutex_t * mutex)
   pthread_mutex_t mx = *mutex;
   ptw32_robust_node_t* robust = mx->robustNode;
 
-  switch (PTW32_INTERLOCKED_COMPARE_EXCHANGE(
-            (LPLONG)&robust->stateInconsistent,
-            (LONG)PTW32_ROBUST_INCONSISTENT,
-            -1L /* The terminating thread sets this */))
+  switch ((LONG)PTW32_INTERLOCKED_COMPARE_EXCHANGE_LONG(
+            (PTW32_INTERLOCKED_LONGPTR)&robust->stateInconsistent,
+            (PTW32_INTERLOCKED_LONG)PTW32_ROBUST_INCONSISTENT,
+            (PTW32_INTERLOCKED_LONG)-1 /* The terminating thread sets this */))
     {
       case -1L:
           result = EOWNERDEAD;
@@ -177,10 +177,10 @@ pthread_mutex_consistent (pthread_mutex_t* mutex)
     }
 
   if (mx->kind >= 0
-        || (LONG)PTW32_ROBUST_INCONSISTENT != PTW32_INTERLOCKED_COMPARE_EXCHANGE(
-                                                (LPLONG)&mx->robustNode->stateInconsistent,
-                                                (LONG)PTW32_ROBUST_CONSISTENT,
-                                                (LONG)PTW32_ROBUST_INCONSISTENT))
+        || (PTW32_INTERLOCKED_LONG)PTW32_ROBUST_INCONSISTENT != PTW32_INTERLOCKED_COMPARE_EXCHANGE_LONG(
+                                                (PTW32_INTERLOCKED_LONGPTR)&mx->robustNode->stateInconsistent,
+                                                (PTW32_INTERLOCKED_LONG)PTW32_ROBUST_CONSISTENT,
+                                                (PTW32_INTERLOCKED_LONG)PTW32_ROBUST_INCONSISTENT))
     {
       result = EINVAL;
     }

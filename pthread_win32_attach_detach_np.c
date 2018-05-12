@@ -38,11 +38,6 @@
 #include "implement.h"
 
 /*
- * Handle to kernel32.dll 
- */
-static HINSTANCE ptw32_h_kernel32;
-
-/*
  * Handle to quserex.dll 
  */
 static HINSTANCE ptw32_h_quserex;
@@ -50,20 +45,47 @@ static HINSTANCE ptw32_h_quserex;
 BOOL
 pthread_win32_process_attach_np ()
 {
+  TCHAR QuserExDLLPathBuf[1024];
   BOOL result = TRUE;
 
   result = ptw32_processInitialize ();
 
-#ifdef _UWIN
+#if defined(_UWIN)
   pthread_count++;
 #endif
 
+#if defined(__GNUC__)
   ptw32_features = 0;
+#else
+  /*
+   * This is obsolete now.
+   */
+  ptw32_features = PTW32_SYSTEM_INTERLOCKED_COMPARE_EXCHANGE;
+#endif
 
   /*
-   * Load QUSEREX.DLL and try to get address of QueueUserAPCEx
+   * Load QUSEREX.DLL and try to get address of QueueUserAPCEx.
+   * Because QUSEREX.DLL requires a driver to be installed we will
+   * assume the DLL is in the system directory.
+   *
+   * This should take care of any security issues.
    */
-  ptw32_h_quserex = LoadLibrary (TEXT ("QUSEREX.DLL"));
+#if defined(__GNUC__) || _MSC_VER < 1400
+  if(GetSystemDirectory(QuserExDLLPathBuf, sizeof(QuserExDLLPathBuf)))
+  {
+    (void) strncat(QuserExDLLPathBuf,
+                   "\\QUSEREX.DLL",
+                   sizeof(QuserExDLLPathBuf) - strlen(QuserExDLLPathBuf) - 1);
+    ptw32_h_quserex = LoadLibrary(QuserExDLLPathBuf);
+  }
+#else
+  /* strncat is secure - this is just to avoid a warning */
+  if(GetSystemDirectory(QuserExDLLPathBuf, sizeof(QuserExDLLPathBuf)) &&
+     0 == strncat_s(QuserExDLLPathBuf, sizeof(QuserExDLLPathBuf), "\\QUSEREX.DLL", 12))
+  {
+    ptw32_h_quserex = LoadLibrary(QuserExDLLPathBuf);
+  }
+#endif
 
   if (ptw32_h_quserex != NULL)
     {
@@ -161,11 +183,6 @@ pthread_win32_process_detach_np ()
 	    }
 	  (void) FreeLibrary (ptw32_h_quserex);
 	}
-
-      if (ptw32_h_kernel32)
-	{
-	  (void) FreeLibrary (ptw32_h_kernel32);
-	}
     }
 
   return TRUE;
@@ -208,9 +225,9 @@ pthread_win32_thread_detach_np ()
             {
               pthread_mutex_t mx = sp->robustMxList->mx;
               ptw32_robust_mutex_remove(&mx, sp);
-              (void) PTW32_INTERLOCKED_EXCHANGE(
-                       (LPLONG)&mx->robustNode->stateInconsistent,
-                       -1L);
+              (void) PTW32_INTERLOCKED_EXCHANGE_LONG(
+                       (PTW32_INTERLOCKED_LONGPTR)&mx->robustNode->stateInconsistent,
+                       (PTW32_INTERLOCKED_LONG)-1);
               /*
                * If there are no waiters then the next thread to block will
                * sleep, wakeup immediately and then go back to sleep.

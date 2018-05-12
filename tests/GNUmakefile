@@ -46,6 +46,10 @@ MAKE	= make -k
 # # make CROSS=i386-mingw32msvc- clean GC
 CROSS   =
 
+# For cross testing use e.g.
+# # make RUN=wine CROSS=i386-mingw32msvc- clean GC
+RUN     =
+
 AR      = $(CROSS)ar
 DLLTOOL = $(CROSS)dlltool
 CC      = $(CROSS)gcc
@@ -91,7 +95,7 @@ TESTS	= \
 	  self1 mutex5 mutex1 mutex1e mutex1n mutex1r \
 	  semaphore1 semaphore2 semaphore3 \
 	  condvar1 condvar1_1 condvar1_2 condvar2 condvar2_1 exit1 \
-	  create1 create2 reuse1 reuse2 equal1 \
+	  create1 create2 create3 reuse1 reuse2 equal1 \
 	  sequence1 kill1 valid1 valid2 \
 	  exit2 exit3 exit4 exit5 \
 	  join0 join1 detach1 join2 join3 \
@@ -117,7 +121,7 @@ TESTS	= \
 	  priority1 priority2 inherit1 \
 	  spin1 spin2 spin3 spin4 \
 	  exception1 exception2 exception3 \
-	  cancel9 create3 stress1
+	  cancel9 stress1
 
 STRESSTESTS = \
 	stress1
@@ -130,7 +134,7 @@ STATICTESTS = \
 	  self1 mutex5 mutex1 mutex1e mutex1n mutex1r \
 	  semaphore1 semaphore2 semaphore3 \
 	  condvar1 condvar1_1 condvar1_2 condvar2 condvar2_1 exit1 \
-	  create1 create2 reuse1 reuse2 equal1 \
+	  create1 create2 create3 reuse1 reuse2 equal1 \
 	  sequence1 kill1 valid1 valid2 \
 	  exit2 exit3 exit4 exit5 \
 	  join0 join1 detach1 join2 join3 \
@@ -156,7 +160,7 @@ STATICTESTS = \
 	  priority1 priority2 inherit1 \
 	  spin1 spin2 spin3 spin4 \
 	  exception1 exception2 exception3 \
-	  cancel9 create3 stress1
+	  cancel9 stress1
 
 ALLTESTS = $(TESTS) $(BENCHTESTS)
 
@@ -204,6 +208,9 @@ GCE-bench:
 GC-debug:
 	$(MAKE) TEST=GC CC=$(CC) XXCFLAGS="-fopenmp -D__CLEANUP_C" OPT="${DOPT}" DLL_VER="$(DLL_VER)d" all-pass
 
+GCE-debug:
+	$(MAKE) TEST=GCE CC=$(CXX) XXCFLAGS="-fopenmp -D__CLEANUP_CXX" OPT="${DOPT}" DLL_VER="$(DLL_VER)d" all-pass
+
 GC-bench-debug:
 	$(MAKE) TEST=GC CC=$(CC) XXCFLAGS="-D__CLEANUP_C" XXLIBS="benchlib.o" OPT="${OPT}" DLL_VER="$(DLL_VER)d" all-bench
 
@@ -248,7 +255,6 @@ barrier5.pass: barrier4.pass
 barrier6.pass: barrier5.pass
 cancel1.pass: create1.pass
 cancel2.pass: cancel1.pass
-cancel2_1.pass: cancel2.pass
 cancel3.pass: context1.pass
 cancel4.pass: cancel3.pass
 cancel5.pass: cancel3.pass
@@ -276,12 +282,12 @@ condvar6.pass: condvar5.pass
 condvar7.pass: condvar6.pass cleanup1.pass
 condvar8.pass: condvar7.pass
 condvar9.pass: condvar8.pass
-context1.pass: cancel2.pass
+context1.pass: cancel1.pass
 count1.pass: join1.pass
 create1.pass: mutex2.pass
 create2.pass: create1.pass
-create3.pass:
-delay1.pass: cancel2.pass
+create3.pass: create2.pass
+delay1.pass:
 delay2.pass: delay1.pass
 detach1.pass: join0.pass
 equal1.pass: create1.pass
@@ -336,7 +342,7 @@ once4.pass: once3.pass
 openmp1.pass: tsd2.pass
 priority1.pass: join1.pass
 priority2.pass: priority1.pass barrier3.pass
-reuse1.pass: create2.pass
+reuse1.pass: create3.pass
 reuse2.pass: reuse1.pass
 robust1.pass: mutex8r.pass
 robust2.pass: mutex8r.pass
@@ -345,7 +351,7 @@ robust4.pass: robust3.pass
 robust5.pass: robust4.pass
 rwlock1.pass: condvar6.pass
 rwlock2.pass: rwlock1.pass
-rwlock3.pass: rwlock2.pass
+rwlock3.pass: rwlock2.pass join2.pass
 rwlock4.pass: rwlock3.pass
 rwlock5.pass: rwlock4.pass
 rwlock6.pass: rwlock5.pass
@@ -379,20 +385,20 @@ valid2.pass: valid1.pass
 
 sizes.pass: sizes.exe
 	@ $(ECHO) Running $*
-	./$< > SIZES.$(TEST)
+	@ $(RUN) ./$< > SIZES.$(TEST)
 	@ $(CAT) SIZES.$(TEST)
 	@ $(ECHO) Passed
 	@ $(TOUCH) $@
 
 %.pass: %.exe
 	@ $(ECHO) Running $*
-	./$*
+	@ $(RUN) ./$*
 	@ $(ECHO) Passed
 	@ $(TOUCH) $@
 
 %.bench: $(LIB) $(DLL) $(HDR) $(QAPC) $(XXLIBS) %.exe
 	@ $(ECHO) Running $*
-	./$*
+	@ $(RUN) ./$*
 	@ $(ECHO) Done
 	@ $(TOUCH) $@
 

@@ -32,12 +32,10 @@
 DLL_VER	= 2
 DLL_VERD= $(DLL_VER)d
 
-DEVROOT = $(PREFIX)
+DEVROOT	= C:\PTHREADS
 
-DLLDEST	= $(DEVROOT)/lib
-LIBDEST	= $(DEVROOT)/lib
-HDRDEST	= $(DEVROOT)/include
-
+DLLDEST	= $(DEVROOT)\DLL
+LIBDEST	= $(DEVROOT)\DLL
 
 # If Running MsysDTK
 RM	= rm -f
@@ -61,7 +59,6 @@ RANLIB  = $(CROSS)ranlib
 RC	= $(CROSS)windres
 
 OPT	= $(CLEANUP) -O3 # -finline-functions -findirect-inlining
-DOPT	= $(CLEANUP) -g -O0
 XOPT	=
 
 RCFLAGS		= --include-dir=.
@@ -99,7 +96,7 @@ RCFLAGS		= --include-dir=.
 GC_CFLAGS	= $(PTW32_FLAGS) 
 GCE_CFLAGS	= $(PTW32_FLAGS) -mthreads
 
-## Mingw32
+## Mingw
 MAKE		?= make
 CFLAGS	= $(OPT) $(XOPT) -I. -DHAVE_PTW32_CONFIG_H -Wall
 
@@ -232,7 +229,6 @@ SMALL_STATIC_OBJS	= \
 		ptw32_callUserDestroyRoutines.o \
 		ptw32_timespec.o \
 		ptw32_throw.o \
-		ptw32_InterlockedCompareExchange.o \
 		ptw32_getprocessors.o \
 		ptw32_calloc.o \
 		ptw32_new.o \
@@ -375,7 +371,6 @@ PRIVATE_SRCS	= \
 		ptw32_relmillisecs.c \
 		ptw32_timespec.c \
 		ptw32_throw.c \
-		ptw32_InterlockedCompareExchange.c \
 		ptw32_getprocessors.c
 
 RWLOCK_SRCS	= \
@@ -479,43 +474,35 @@ all:
 	@ $(MAKE) clean GCE
 	@ $(MAKE) clean GC
 
-install_static:
-	mkdir -p $(LIBDEST);
-	mkdir -p $(HDRDEST);
-	cp *.a $(LIBDEST)
-	cp pthread.h $(HDRDEST)
-	cp sched.h $(HDRDEST)
-	cp semaphore.h $(HDRDEST)
-
 GC:
 		$(MAKE) CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_OBJS)" $(GC_DLL)
 
 GC-debug:
-		$(MAKE) CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_OBJS)" DLL_VER=$(DLL_VERD) OPT="$(DOPT)" $(GCD_DLL)
+		$(MAKE) CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_OBJS)" DLL_VER=$(DLL_VERD) OPT="-D__CLEANUP_C -g -O0" $(GCD_DLL)
 
 GCE:
 		$(MAKE) CC=$(CXX) CLEANUP=-D__CLEANUP_CXX XC_FLAGS="$(GCE_CFLAGS)" OBJ="$(DLL_OBJS)" $(GCE_DLL)
 
 GCE-debug:
-		$(MAKE) CC=$(CXX) CLEANUP=-D__CLEANUP_CXX XC_FLAGS="$(GCE_CFLAGS)" OBJ="$(DLL_OBJS)" DLL_VER=$(DLL_VERD) OPT="$(DOPT)" $(GCED_DLL)
+		$(MAKE) CC=$(CXX) CLEANUP=-D__CLEANUP_CXX XC_FLAGS="$(GCE_CFLAGS)" OBJ="$(DLL_OBJS)" DLL_VER=$(DLL_VERD) OPT="-D__CLEANUP_CXX -g -O0" $(GCED_DLL)
 
 GC-inlined:
 		$(MAKE) XOPT="-DPTW32_BUILD_INLINED" CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" $(GC_INLINED_STAMP)
 
 GC-inlined-debug:
-		$(MAKE) XOPT="-DPTW32_BUILD_INLINED" CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" DLL_VER=$(DLL_VERD) OPT="$(DOPT)" $(GCD_INLINED_STAMP)
+		$(MAKE) XOPT="-DPTW32_BUILD_INLINED" CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" DLL_VER=$(DLL_VERD) OPT="-D__CLEANUP_C -g -O0" $(GCD_INLINED_STAMP)
 
 GCE-inlined:
 		$(MAKE) CC=$(CXX) XOPT="-DPTW32_BUILD_INLINED" CLEANUP=-D__CLEANUP_CXX XC_FLAGS="$(GCE_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" $(GCE_INLINED_STAMP)
 
 GCE-inlined-debug:
-		$(MAKE) CC=$(CXX) XOPT="-DPTW32_BUILD_INLINED" CLEANUP=-D__CLEANUP_CXX XC_FLAGS="$(GCE_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" DLL_VER=$(DLL_VERD) OPT="$(DOPT)" $(GCED_INLINED_STAMP)
+		$(MAKE) CC=$(CXX) XOPT="-DPTW32_BUILD_INLINED" CLEANUP=-D__CLEANUP_CXX XC_FLAGS="$(GCE_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" DLL_VER=$(DLL_VERD) OPT="-D__CLEANUP_CXX -g -O0" $(GCED_INLINED_STAMP)
 
 GC-static:
 		$(MAKE) XOPT="-DPTW32_BUILD_INLINED -DPTW32_STATIC_LIB" CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" $(GC_STATIC_STAMP)
 
 GC-static-debug:
-		$(MAKE) XOPT="-DPTW32_BUILD_INLINED -DPTW32_STATIC_LIB" CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" DLL_VER=$(DLL_VERD) OPT="$(DOPT)" $(GCD_STATIC_STAMP)
+		$(MAKE) XOPT="-DPTW32_BUILD_INLINED -DPTW32_STATIC_LIB" CLEANUP=-D__CLEANUP_C XC_FLAGS="$(GC_CFLAGS)" OBJ="$(DLL_INLINED_OBJS)" DLL_VER=$(DLL_VERD) OPT="-D__CLEANUP_C -g -O0" $(GCD_STATIC_STAMP)
 
 tests:
 	@ cd tests
@@ -528,7 +515,7 @@ tests:
 	$(CC) -c $(CFLAGS) -DPTW32_BUILD_INLINED -Wa,-ahl $^ > $@
 
 %.o: %.rc
-	$(RC) $(RCFLAGS) $(CLEANUP) -o $@ $<
+	$(RC) $(RCFLAGS) $(CLEANUP) -o $@ -i $<
 
 .SUFFIXES: .dll .rc .c .o
 

@@ -72,7 +72,10 @@
  * - Process returns non-zero exit status.
  */
 
-#if defined(_MSC_VER) || defined(__cplusplus)
+/*
+ * Don't know how to identify if we are using SEH so it's only C++ for now
+ */
+#if defined(__cplusplus)
 
 #include "test.h"
 
@@ -80,7 +83,7 @@
  * Create NUMTHREADS threads in addition to the Main thread.
  */
 enum {
-  NUMTHREADS = 1
+  NUMTHREADS = 4
 };
 
 typedef struct bag_t_ bag_t;
@@ -120,7 +123,7 @@ mythread(void * arg)
       break;
     }
 
-#if defined(_MSC_VER) && !defined(__cplusplus)
+#if !defined(__cplusplus)
   __try
 #else
   try
@@ -136,7 +139,7 @@ mythread(void * arg)
 	  pthread_testcancel();
 	}
     }
-#if defined(_MSC_VER) && !defined(__cplusplus)
+#if !defined(__cplusplus)
   __except(EXCEPTION_EXECUTE_HANDLER)
 #else
 #if defined(PtW32CatchAll)
@@ -240,12 +243,16 @@ main()
   return 0;
 }
 
-#else /* defined(_MSC_VER) || defined(__cplusplus) */
+#else /* defined(__cplusplus) */
+
+#include <stdio.h>
 
 int
 main()
 {
+  fprintf(stderr, "Test N/A for this compiler environment.\n");
   return 0;
 }
 
-#endif /* defined(_MSC_VER) || defined(__cplusplus) */
+#endif /* defined(__cplusplus) */
+

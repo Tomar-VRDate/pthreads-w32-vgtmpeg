@@ -38,7 +38,7 @@ RM	= erase
 CAT	= type
 MKDIR	= mkdir
 TOUCH	= echo Passed >
-ECHO	= @echo
+ECHO	= echo
 
 # The next path is relative to $BUILD_DIR
 QAPC	= # ..\QueueUserAPCEx\User\quserex.dll
@@ -81,14 +81,16 @@ EHFLAGS	=
 # If a test case returns a non-zero exit code to the shell, make will
 # stop.
 
-PASSES= sizes.pass  loadfree.pass \
+PASSES = sizes.pass $(REGULAR_PASSES)
+
+REGULAR_PASSES = loadfree.pass \
 	  self1.pass  mutex5.pass  \
 	  mutex1.pass  mutex1n.pass  mutex1e.pass  mutex1r.pass  \
 	  semaphore1.pass  semaphore2.pass  semaphore3.pass  \
 	  mutex2.pass  mutex3.pass  \
 	  mutex2r.pass  mutex2e.pass  mutex3r.pass  mutex3e.pass  \
 	  condvar1.pass  condvar1_1.pass  condvar1_2.pass  condvar2.pass  condvar2_1.pass  \
-	  exit1.pass  create1.pass  create2.pass  reuse1.pass  reuse2.pass  equal1.pass  \
+	  exit1.pass  create1.pass  create2.pass create3.pass reuse1.pass  reuse2.pass  equal1.pass  \
 	  sequence1.pass  kill1.pass  valid1.pass  valid2.pass  \
 	  exit2.pass  exit3.pass  exit4.pass  exit5.pass  \
 	  join0.pass  join1.pass  detach1.pass  join2.pass join3.pass  \
@@ -118,7 +120,7 @@ PASSES= sizes.pass  loadfree.pass \
 	  priority1.pass priority2.pass inherit1.pass  \
 	  spin1.pass  spin2.pass  spin3.pass  spin4.pass  \
 	  exception1.pass  exception2.pass  exception3.pass  \
-	  cancel9.pass  create3.pass  stress1.pass
+	  cancel9.pass  stress1.pass
 
 BENCHRESULTS = \
 	  benchtest1.bench benchtest2.bench benchtest3.bench benchtest4.bench benchtest5.bench
@@ -134,7 +136,7 @@ STATICRESULTS = \
 	  mutex2.pass  mutex3.pass  \
 	  mutex2r.pass  mutex2e.pass  mutex3r.pass  mutex3e.pass  \
 	  condvar1.pass  condvar1_1.pass  condvar1_2.pass  condvar2.pass  condvar2_1.pass  \
-	  exit1.pass  create1.pass  create2.pass  reuse1.pass  reuse2.pass  equal1.pass  \
+	  exit1.pass  create1.pass  create2.pass  create3.pass  reuse1.pass  reuse2.pass  equal1.pass  \
 	  sequence1.pass  kill1.pass  valid1.pass  valid2.pass  \
 	  exit2.pass  exit3.pass  exit4.pass  exit5.pass  \
 	  join0.pass  join1.pass  detach1.pass  join2.pass join3.pass  \
@@ -164,7 +166,7 @@ STATICRESULTS = \
 	  priority1.pass priority2.pass inherit1.pass  \
 	  spin1.pass  spin2.pass  spin3.pass  spin4.pass  \
 	  exception1.pass  exception2.pass  exception3.pass  \
-	  cancel9.pass  create3.pass  stress1.pass
+	  cancel9.pass  stress1.pass
 
 help:
 	@ $(ECHO) Run one of the following command lines:
@@ -183,12 +185,12 @@ help:
 	@ $(ECHO) nmake clean VSE-stress  (to stresstest using VSE dll with SEH stress apps)
 
 all:
-	@ nmake clean VC
-	@ nmake clean VCX
-	@ nmake clean VCE
-	@ nmake clean VSE
-	@ nmake clean VC-bench
-	@ nmake clean VC-stress
+	@ $(MAKE) /E clean VC
+	@ $(MAKE) /E clean VCX
+	@ $(MAKE) /E clean VCE
+	@ $(MAKE) /E clean VSE
+	@ $(MAKE) /E clean VC-bench
+	@ $(MAKE) /E clean VC-stress
 
 # This allows an individual test application to be made using the default lib.
 # e.g. nmake clean test cancel3.exe
@@ -213,7 +215,7 @@ sizes.pass: sizes.exe
 	@ $(ECHO) ...... Passed
 	@ $(TOUCH) $*.pass
 
-$(PASSES): $*.exe
+$(REGULAR_PASSES): $*.exe
 	@ $(ECHO) ... Running $(TEST) test: $*.exe
 	@ .\$*.exe
 	@ $(ECHO) ...... Passed
@@ -232,43 +234,43 @@ $(STRESSRESULTS): $*.exe
 	@ $(TOUCH) $*.pass
 
 VC:
-	@ nmake TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCFLAGS)" tests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCFLAGS)" tests
 
 VCE:
-	@ nmake TEST="$@" CPLIB="$(VCELIB)" CPDLL="$(VCEDLL)" EHFLAGS="$(VCEFLAGS)" tests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCELIB)" CPDLL="$(VCEDLL)" EHFLAGS="$(VCEFLAGS)" tests
 
 VSE:	
-	@ nmake TEST="$@" CPLIB="$(VSELIB)" CPDLL="$(VSEDLL)" EHFLAGS="$(VSEFLAGS)" tests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VSELIB)" CPDLL="$(VSEDLL)" EHFLAGS="$(VSEFLAGS)" tests
 
 VCX:
-	@ nmake TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCXFLAGS)" tests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCXFLAGS)" tests
 
 VC-bench:
-	@ nmake TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCFLAGS)" XXLIBS="benchlib.o" benchtests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCFLAGS)" XXLIBS="benchlib.o" benchtests
 
 VCE-bench:
-	@ nmake TEST="$@" CPLIB="$(VCELIB)" CPDLL="$(VCEDLL)" EHFLAGS="$(VCEFLAGS)" XXLIBS="benchlib.o" benchtests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCELIB)" CPDLL="$(VCEDLL)" EHFLAGS="$(VCEFLAGS)" XXLIBS="benchlib.o" benchtests
 
 VSE-bench:
-	@ nmake TEST="$@" CPLIB="$(VSELIB)" CPDLL="$(VSEDLL)" EHFLAGS="$(VSEFLAGS)" XXLIBS="benchlib.o" benchtests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VSELIB)" CPDLL="$(VSEDLL)" EHFLAGS="$(VSEFLAGS)" XXLIBS="benchlib.o" benchtests
 
 VCX-bench:
-	@ nmake TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCXFLAGS)" XXLIBS="benchlib.o" benchtests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCXFLAGS)" XXLIBS="benchlib.o" benchtests
 
 VC-stress:
-	@ nmake TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCFLAGS)" stresstests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCFLAGS)" stresstests
 
 VCE-stress:
-	@ nmake TEST="$@" CPLIB="$(VCELIB)" CPDLL="$(VCEDLL)" EHFLAGS="$(VCEFLAGS)" stresstests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCELIB)" CPDLL="$(VCEDLL)" EHFLAGS="$(VCEFLAGS)" stresstests
 
 VSE-stress:
-	@ nmake TEST="$@" CPLIB="$(VSELIB)" CPDLL="$(VSEDLL)" EHFLAGS="$(VSEFLAGS)" stresstests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VSELIB)" CPDLL="$(VSEDLL)" EHFLAGS="$(VSEFLAGS)" stresstests
 
 VCX-stress:
-	@ nmake TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCXFLAGS)" stresstests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCLIB)" CPDLL="$(VCDLL)" EHFLAGS="$(VCXFLAGS)" stresstests
 
 VC-static:
-	@ nmake TEST="$@" CPLIB="$(VCLIB)" CPDLL="" EHFLAGS="$(VCFLAGS) /DPTW32_STATIC_LIB" statictests
+	@ $(MAKE) /E TEST="$@" CPLIB="$(VCLIB)" CPDLL="" EHFLAGS="$(VCFLAGS) /DPTW32_STATIC_LIB" statictests
 
 .c.exe:
 	@ $(ECHO) $(CC) $(EHFLAGS) $(CFLAGS) $(INCLUDES) $< /Fe$@ /link $(LFLAGS) $(CPLIB) $(XXLIBS)
@@ -347,11 +349,11 @@ condvar6.pass: condvar5.pass
 condvar7.pass: condvar6.pass cleanup1.pass
 condvar8.pass: condvar7.pass
 condvar9.pass: condvar8.pass
-context1.pass: cancel2.pass
+context1.pass: cancel1.pass
 count1.pass: join1.pass
 create1.pass: mutex2.pass
 create2.pass: create1.pass
-create3.pass:
+create3.pass: create2.pass
 delay1.pass:
 delay2.pass: delay1.pass
 detach1.pass: join0.pass
@@ -406,7 +408,7 @@ once3.pass: once2.pass
 once4.pass: once3.pass
 priority1.pass: join1.pass
 priority2.pass: priority1.pass barrier3.pass
-reuse1.pass: create2.pass
+reuse1.pass: create3.pass
 reuse2.pass: reuse1.pass
 robust1.pass: mutex8r.pass
 robust2.pass: mutex8r.pass
@@ -415,7 +417,7 @@ robust4.pass: robust3.pass
 robust5.pass: robust4.pass
 rwlock1.pass: condvar6.pass
 rwlock2.pass: rwlock1.pass
-rwlock3.pass: rwlock2.pass
+rwlock3.pass: rwlock2.pass join2.pass
 rwlock4.pass: rwlock3.pass
 rwlock5.pass: rwlock4.pass
 rwlock6.pass: rwlock5.pass
