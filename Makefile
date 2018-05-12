@@ -471,10 +471,10 @@ clean:
 install_static:
 	mkdir -p $(LIBDEST);
 	mkdir -p $(HDRDEST);
- 	cp *.a $(LIBDEST)
- 	cp pthread.h $(HDRDEST)
- 	cp sched.h $(HDRDEST)
- 	cp semaphore.h $(HDRDEST)
+	cp *.a $(LIBDEST)
+	cp pthread.h $(HDRDEST)
+	cp sched.h $(HDRDEST)
+	cp semaphore.h $(HDRDEST)
 
 install:
 	copy pthread*.dll $(DLLDEST)
